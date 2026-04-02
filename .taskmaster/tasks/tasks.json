@@ -1,0 +1,157 @@
+{
+  "meta": {
+    "projectName": "PDFParse",
+    "version": "1.0.0",
+    "createdAt": "2026-04-02",
+    "description": "Lightweight PDF text extraction desktop app with Svelte + Tauri"
+  },
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Initialize Tauri v2 + Svelte project",
+      "description": "Scaffold a new Tauri v2 project with Svelte frontend using create-tauri-app. Configure Cargo.toml, package.json, tauri.conf.json with app metadata (name: pdfparse, window title, minimum size 600x400).",
+      "status": "done",
+      "priority": "high",
+      "dependencies": [],
+      "subtasks": [
+        "Run create-tauri-app with Svelte template",
+        "Configure tauri.conf.json (window size, title, identifier)",
+        "Verify dev server starts with `cargo tauri dev`"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Create liteparse sidecar parser",
+      "description": "Create a Node.js script (src-tauri/sidecar/parser.mjs) that uses @llamaindex/liteparse to extract text from a PDF file path passed as CLI argument. Output JSON with per-page text array. Disable OCR (ocrEnabled: false). Compile to standalone binary with pkg for bundling as Tauri sidecar.",
+      "status": "done",
+      "priority": "high",
+      "dependencies": [1],
+      "subtasks": [
+        "Install @llamaindex/liteparse as dependency",
+        "Create src-tauri/sidecar/parser.mjs — accept file path arg, output JSON",
+        "Configure LiteParse with ocrEnabled: false",
+        "Output format: { pages: string[], page_count: number, char_count: number }",
+        "Compile with pkg to standalone binary (pdfparse-parser)",
+        "Configure tauri.conf.json externalBin for sidecar"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Add Tauri plugins (dialog, clipboard, shell)",
+      "description": "Add tauri-plugin-dialog for file open/save dialogs, tauri-plugin-clipboard-manager for copy, and tauri-plugin-shell for sidecar execution. Register all plugins in Tauri builder. Configure permissions.",
+      "status": "done",
+      "priority": "high",
+      "dependencies": [1],
+      "subtasks": [
+        "Add tauri-plugin-dialog, tauri-plugin-clipboard-manager, tauri-plugin-shell to Cargo.toml",
+        "Register all three plugins in lib.rs Tauri builder",
+        "Add plugin permissions in capabilities config (including shell:allow-execute for sidecar)"
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Build main app layout (Svelte)",
+      "description": "Create the single-window layout with three zones: header (app title + file info), main content area (drop zone or text display), and footer (action buttons). Use Svelte 5 with runes for state management.",
+      "status": "done",
+      "priority": "high",
+      "dependencies": [1],
+      "subtasks": [
+        "Create App.svelte with header/main/footer layout",
+        "Create app state store (selectedFile, extractedText, loading, error)",
+        "Add basic CSS for layout (flexbox, min-height)",
+        "Support system light/dark theme via prefers-color-scheme"
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Implement file selection (picker + drag-and-drop)",
+      "description": "Add a file picker button that opens a native dialog filtered to *.pdf. Implement drag-and-drop on the main content area. Display selected file name and size. Send file path to Rust backend.",
+      "status": "done",
+      "priority": "high",
+      "dependencies": [3, 4],
+      "subtasks": [
+        "Create DropZone.svelte component",
+        "Wire up tauri dialog open() with PDF filter",
+        "Implement HTML5 drag-and-drop with visual feedback",
+        "Show file name and formatted file size after selection"
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Implement text extraction flow (frontend ↔ sidecar ↔ backend)",
+      "description": "Implement Rust extract_text command that invokes the liteparse sidecar binary, parses its JSON output, and returns the result to the frontend. Connect the frontend via Tauri invoke. Show loading spinner, display extracted text with page separators and counts.",
+      "status": "done",
+      "priority": "high",
+      "dependencies": [2, 5],
+      "subtasks": [
+        "Implement extract_text Tauri command that spawns sidecar with file path",
+        "Parse sidecar stdout JSON into ExtractionResult struct",
+        "Call invoke('extract_text', { filePath }) from frontend on file selection",
+        "Show loading spinner/progress indicator",
+        "Create TextDisplay.svelte component for extracted text",
+        "Render page separators (--- Page N ---)",
+        "Display page count and character count in header",
+        "Handle and display error messages (sidecar errors, parse failures)"
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Implement copy and save actions",
+      "description": "Add a 'Copy All' button that copies extracted text to clipboard using the clipboard plugin. Add a 'Save as TXT' button that opens a save dialog and writes the text to a file. Show success feedback for both actions.",
+      "status": "done",
+      "priority": "medium",
+      "dependencies": [3, 6],
+      "subtasks": [
+        "Implement copy to clipboard via tauri-plugin-clipboard-manager",
+        "Implement save-to-file via tauri dialog save() + Rust write command",
+        "Add save_text Tauri command in Rust",
+        "Show brief success toast/feedback on copy and save",
+        "Disable buttons when no text is extracted"
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Polish UI and error states",
+      "description": "Refine the visual design: typography, spacing, colors, transitions. Ensure all error states display user-friendly messages. Add empty state illustration/text for the drop zone. Test dark mode.",
+      "status": "done",
+      "priority": "medium",
+      "dependencies": [6, 7],
+      "subtasks": [
+        "Style the drop zone with dashed border and icon",
+        "Add transition animations (file load, text appear)",
+        "Style error messages distinctly",
+        "Test and refine dark mode colors",
+        "Add app icon placeholder"
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Add large file warning",
+      "description": "Check file size before extraction. If the PDF is over 100MB, show a confirmation dialog warning the user. Proceed only if confirmed.",
+      "status": "done",
+      "priority": "low",
+      "dependencies": [6],
+      "subtasks": [
+        "Check file size in frontend after selection",
+        "Show confirmation dialog for files > 100MB",
+        "Allow user to proceed or cancel"
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Test and build for distribution",
+      "description": "Test the app with various PDF types (text, mixed, encrypted, large). Ensure sidecar binary is bundled correctly. Build release binaries with `cargo tauri build`. Verify the app works on the target platform.",
+      "status": "done",
+      "priority": "medium",
+      "dependencies": [8, 9],
+      "subtasks": [
+        "Test with plain text PDFs",
+        "Test with image-only PDFs (verify error message)",
+        "Test with encrypted PDFs (verify error message)",
+        "Test with large PDFs (100+ pages)",
+        "Build release binary",
+        "Verify app launches and works from built binary"
+      ]
+    }
+  ]
+}

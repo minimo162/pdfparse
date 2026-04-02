@@ -1,0 +1,17 @@
+{
+  "name": "pdfparse-sidecar",
+  "private": true,
+  "type": "module",
+  "bin": "parser.mjs",
+  "scripts": {
+    "build:current": "node build-sidecar.mjs current",
+    "build:all": "node build-sidecar.mjs all"
+  },
+  "dependencies": {
+    "@llamaindex/liteparse": "^1.4.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.10",
+    "@yao-pkg/pkg": "^6.14.2"
+  }
+}

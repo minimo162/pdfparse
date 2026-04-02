@@ -1,0 +1,131 @@
+# PDFParse — Product Requirements Document
+# Lightweight PDF Text Extraction Desktop App
+
+## 1. Overview
+
+PDFParse is a lightweight desktop application for extracting text from PDF files.
+Built with Svelte (frontend) and Tauri (backend/desktop shell), it uses
+@llamaindex/liteparse for spatial text extraction from PDFs. LiteParse preserves
+the original layout (column alignment, indentation) through spatial text parsing.
+OCR and Office document support are intentionally disabled — PDF-only, text-layer
+extraction.
+
+## 2. Goals
+
+- Provide a fast, offline, cross-platform desktop tool to extract text from PDFs
+- Keep the app minimal — no OCR, no Office document support, no cloud services
+- Deliver a clean, intuitive single-window UI
+
+## 3. Non-Goals
+
+- OCR (scanned image PDFs are out of scope)
+- Office document parsing (docx, xlsx, pptx, etc.)
+- Cloud upload / server-side processing
+- PDF editing or annotation
+- Batch processing (v1 — single file at a time)
+
+## 4. Target Users
+
+- Knowledge workers who need to quickly grab text from PDF reports
+- Developers who want a lightweight local tool instead of online converters
+- Anyone who values privacy and offline-first tooling
+
+## 5. Core Features
+
+### 5.1 File Selection
+- Open a file picker dialog to select a single PDF file
+- Drag-and-drop a PDF onto the app window
+- Display the selected file name and size
+
+### 5.2 Text Extraction
+- Parse the PDF using @llamaindex/liteparse (OCR disabled)
+- Extract all text content page by page with spatial layout preserved
+- Show a progress indicator during extraction
+- Handle errors gracefully (encrypted PDFs, image-only PDFs, corrupt files)
+
+### 5.3 Text Display
+- Show extracted text in a scrollable, read-only text area
+- Display page separators (e.g., "--- Page 1 ---")
+- Show total page count and character count
+
+### 5.4 Text Export
+- Copy all text to clipboard with one click
+- Save extracted text to a .txt file via save dialog
+- Preserve page structure in exported text
+
+## 6. UI Design
+
+Single-window layout with three zones:
+
+┌─────────────────────────────────────┐
+│  Header: App title + file info      │
+├─────────────────────────────────────┤
+│                                     │
+│  Main area:                         │
+│  - Drop zone / file picker (empty)  │
+│  - Extracted text display (loaded)  │
+│                                     │
+├─────────────────────────────────────┤
+│  Footer: Copy / Save buttons        │
+└─────────────────────────────────────┘
+
+- Minimal, modern aesthetic
+- Light/dark theme based on system preference
+- Responsive layout (min window: 600x400)
+
+## 7. Technical Architecture
+
+### Frontend (Svelte)
+- Framework: Svelte 5 (latest)
+- Bundler: Vite
+- Styling: Plain CSS or Tailwind CSS (keep it simple)
+- State: Svelte stores for app state
+
+### Backend (Tauri + Rust + Node.js sidecar)
+- Tauri v2 for desktop shell
+- @llamaindex/liteparse for PDF text extraction (OCR disabled)
+- Node.js parser script compiled to standalone binary via `pkg` and bundled
+  as a Tauri sidecar (no Node.js installation required on user's machine)
+- Tauri commands exposed to frontend:
+  - `extract_text(file_path: String) -> Result<ExtractionResult, String>`
+    (internally calls sidecar binary)
+  - `save_text(content: String, path: String) -> Result<(), String>`
+- Tauri shell plugin for sidecar execution
+- Tauri dialog plugin for file open/save dialogs
+- Tauri clipboard plugin for copy functionality
+
+### Data Flow
+1. User selects PDF → frontend sends file path to Rust backend
+2. Rust invokes liteparse sidecar → sidecar outputs JSON (per-page text)
+3. Rust parses sidecar output → returns structured result to frontend
+4. Frontend renders text → user can copy/save
+
+## 8. Error Handling
+
+| Scenario              | Behavior                                      |
+|-----------------------|-----------------------------------------------|
+| Encrypted PDF         | Show "This PDF is password-protected" message |
+| Image-only PDF        | Show "No extractable text found" message      |
+| Corrupt file          | Show "Unable to read this file" message       |
+| Non-PDF file          | File picker filters to *.pdf only             |
+| Very large PDF (>100MB)| Show warning, proceed if user confirms       |
+
+## 9. Performance Requirements
+
+- Extract text from a 100-page PDF in under 3 seconds
+- App startup in under 1 second
+- Memory usage under 200MB for typical documents
+
+## 10. Platform Support
+
+- Windows 10/11
+- macOS 12+
+- Linux (Ubuntu 22.04+, Fedora 38+)
+
+## 11. Future Considerations (Not in v1)
+
+- Batch processing (multiple files)
+- Search within extracted text
+- PDF preview alongside extracted text
+- Page range selection for partial extraction
+- Export to Markdown format

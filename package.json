@@ -1,0 +1,34 @@
+{
+  "name": "pdfparse",
+  "version": "0.1.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "dev:desktop": "pnpm sidecar:install && pnpm build:sidecar && vite dev",
+    "build": "pnpm sidecar:install && pnpm build:sidecar && vite build",
+    "sidecar:install": "node -e \"const { existsSync } = require('fs'); const { spawnSync } = require('child_process'); const ready = existsSync('src-tauri/sidecar/node_modules/@llamaindex/liteparse/package.json') && existsSync('src-tauri/sidecar/node_modules/.bin/pkg') && existsSync('src-tauri/sidecar/node_modules/.bin/esbuild'); if (ready) process.exit(0); const pnpmBin = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'; const result = spawnSync(pnpmBin, ['--dir', 'src-tauri/sidecar', 'install'], { stdio: 'inherit' }); process.exit(result.status ?? 1);\"",
+    "build:sidecar": "pnpm --dir src-tauri/sidecar run build:current",
+    "build:sidecar:all": "pnpm --dir src-tauri/sidecar run build:all",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "tauri": "tauri"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-clipboard-manager": "^2",
+    "@tauri-apps/plugin-dialog": "^2"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "^3.0.6",
+    "@sveltejs/kit": "^2.9.0",
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "svelte": "^5.0.0",
+    "svelte-check": "^4.0.0",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.3",
+    "@tauri-apps/cli": "^2"
+  }
+}
