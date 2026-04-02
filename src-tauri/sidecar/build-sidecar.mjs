@@ -108,7 +108,8 @@ for (const [outputTarget, pkgTarget] of targets) {
     ],
     {
       cwd,
-      stdio: "inherit"
+      stdio: "inherit",
+      shell: isWindows
     }
   );
 
