@@ -1,7 +1,7 @@
 {
   "meta": {
     "projectName": "PDFParse",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "createdAt": "2026-04-02",
     "description": "Lightweight PDF text extraction desktop app with Svelte + Tauri"
   },
@@ -9,148 +9,187 @@
     {
       "id": 1,
       "title": "Initialize Tauri v2 + Svelte project",
-      "description": "Scaffold a new Tauri v2 project with Svelte frontend using create-tauri-app. Configure Cargo.toml, package.json, tauri.conf.json with app metadata (name: pdfparse, window title, minimum size 600x400).",
       "status": "done",
       "priority": "high",
-      "dependencies": [],
-      "subtasks": [
-        "Run create-tauri-app with Svelte template",
-        "Configure tauri.conf.json (window size, title, identifier)",
-        "Verify dev server starts with `cargo tauri dev`"
-      ]
+      "dependencies": []
     },
     {
       "id": 2,
       "title": "Create liteparse sidecar parser",
-      "description": "Create a Node.js script (src-tauri/sidecar/parser.mjs) that uses @llamaindex/liteparse to extract text from a PDF file path passed as CLI argument. Output JSON with per-page text array. Disable OCR (ocrEnabled: false). Compile to standalone binary with pkg for bundling as Tauri sidecar.",
       "status": "done",
       "priority": "high",
-      "dependencies": [1],
-      "subtasks": [
-        "Install @llamaindex/liteparse as dependency",
-        "Create src-tauri/sidecar/parser.mjs — accept file path arg, output JSON",
-        "Configure LiteParse with ocrEnabled: false",
-        "Output format: { pages: string[], page_count: number, char_count: number }",
-        "Compile with pkg to standalone binary (pdfparse-parser)",
-        "Configure tauri.conf.json externalBin for sidecar"
-      ]
+      "dependencies": [1]
     },
     {
       "id": 3,
       "title": "Add Tauri plugins (dialog, clipboard, shell)",
-      "description": "Add tauri-plugin-dialog for file open/save dialogs, tauri-plugin-clipboard-manager for copy, and tauri-plugin-shell for sidecar execution. Register all plugins in Tauri builder. Configure permissions.",
       "status": "done",
       "priority": "high",
-      "dependencies": [1],
-      "subtasks": [
-        "Add tauri-plugin-dialog, tauri-plugin-clipboard-manager, tauri-plugin-shell to Cargo.toml",
-        "Register all three plugins in lib.rs Tauri builder",
-        "Add plugin permissions in capabilities config (including shell:allow-execute for sidecar)"
-      ]
+      "dependencies": [1]
     },
     {
       "id": 4,
       "title": "Build main app layout (Svelte)",
-      "description": "Create the single-window layout with three zones: header (app title + file info), main content area (drop zone or text display), and footer (action buttons). Use Svelte 5 with runes for state management.",
       "status": "done",
       "priority": "high",
-      "dependencies": [1],
-      "subtasks": [
-        "Create App.svelte with header/main/footer layout",
-        "Create app state store (selectedFile, extractedText, loading, error)",
-        "Add basic CSS for layout (flexbox, min-height)",
-        "Support system light/dark theme via prefers-color-scheme"
-      ]
+      "dependencies": [1]
     },
     {
       "id": 5,
       "title": "Implement file selection (picker + drag-and-drop)",
-      "description": "Add a file picker button that opens a native dialog filtered to *.pdf. Implement drag-and-drop on the main content area. Display selected file name and size. Send file path to Rust backend.",
       "status": "done",
       "priority": "high",
-      "dependencies": [3, 4],
-      "subtasks": [
-        "Create DropZone.svelte component",
-        "Wire up tauri dialog open() with PDF filter",
-        "Implement HTML5 drag-and-drop with visual feedback",
-        "Show file name and formatted file size after selection"
-      ]
+      "dependencies": [3, 4]
     },
     {
       "id": 6,
       "title": "Implement text extraction flow (frontend ↔ sidecar ↔ backend)",
-      "description": "Implement Rust extract_text command that invokes the liteparse sidecar binary, parses its JSON output, and returns the result to the frontend. Connect the frontend via Tauri invoke. Show loading spinner, display extracted text with page separators and counts.",
       "status": "done",
       "priority": "high",
-      "dependencies": [2, 5],
-      "subtasks": [
-        "Implement extract_text Tauri command that spawns sidecar with file path",
-        "Parse sidecar stdout JSON into ExtractionResult struct",
-        "Call invoke('extract_text', { filePath }) from frontend on file selection",
-        "Show loading spinner/progress indicator",
-        "Create TextDisplay.svelte component for extracted text",
-        "Render page separators (--- Page N ---)",
-        "Display page count and character count in header",
-        "Handle and display error messages (sidecar errors, parse failures)"
-      ]
+      "dependencies": [2, 5]
     },
     {
       "id": 7,
       "title": "Implement copy and save actions",
-      "description": "Add a 'Copy All' button that copies extracted text to clipboard using the clipboard plugin. Add a 'Save as TXT' button that opens a save dialog and writes the text to a file. Show success feedback for both actions.",
       "status": "done",
       "priority": "medium",
-      "dependencies": [3, 6],
-      "subtasks": [
-        "Implement copy to clipboard via tauri-plugin-clipboard-manager",
-        "Implement save-to-file via tauri dialog save() + Rust write command",
-        "Add save_text Tauri command in Rust",
-        "Show brief success toast/feedback on copy and save",
-        "Disable buttons when no text is extracted"
-      ]
+      "dependencies": [3, 6]
     },
     {
       "id": 8,
-      "title": "Polish UI and error states",
-      "description": "Refine the visual design: typography, spacing, colors, transitions. Ensure all error states display user-friendly messages. Add empty state illustration/text for the drop zone. Test dark mode.",
+      "title": "Polish UI and error states (v1)",
       "status": "done",
       "priority": "medium",
-      "dependencies": [6, 7],
-      "subtasks": [
-        "Style the drop zone with dashed border and icon",
-        "Add transition animations (file load, text appear)",
-        "Style error messages distinctly",
-        "Test and refine dark mode colors",
-        "Add app icon placeholder"
-      ]
+      "dependencies": [6, 7]
     },
     {
       "id": 9,
       "title": "Add large file warning",
-      "description": "Check file size before extraction. If the PDF is over 100MB, show a confirmation dialog warning the user. Proceed only if confirmed.",
       "status": "done",
       "priority": "low",
-      "dependencies": [6],
-      "subtasks": [
-        "Check file size in frontend after selection",
-        "Show confirmation dialog for files > 100MB",
-        "Allow user to proceed or cancel"
-      ]
+      "dependencies": [6]
     },
     {
       "id": 10,
       "title": "Test and build for distribution",
-      "description": "Test the app with various PDF types (text, mixed, encrypted, large). Ensure sidecar binary is bundled correctly. Build release binaries with `cargo tauri build`. Verify the app works on the target platform.",
       "status": "done",
       "priority": "medium",
-      "dependencies": [8, 9],
+      "dependencies": [8, 9]
+    },
+    {
+      "id": 11,
+      "title": "Set up design foundation: fonts, CSS variables, and theme tokens",
+      "description": "Replace the current color/font system with the Ink & Paper design tokens. Load Cormorant Garamond (display), DM Sans (body/UI), JetBrains Mono (extracted text) via Google Fonts or local bundles. Define all CSS custom properties for light/dark themes. Add paper grain noise texture (SVG filter, opacity 0.03). Set up custom scrollbar styles (6px, accent thumb). Add prefers-reduced-motion media query foundation.",
+      "status": "done",
+      "priority": "high",
+      "dependencies": [8],
       "subtasks": [
-        "Test with plain text PDFs",
-        "Test with image-only PDFs (verify error message)",
-        "Test with encrypted PDFs (verify error message)",
-        "Test with large PDFs (100+ pages)",
-        "Build release binary",
-        "Verify app launches and works from built binary"
+        "Add Google Fonts link or @font-face for Cormorant Garamond, DM Sans, JetBrains Mono",
+        "Replace all CSS variables in :root with new light theme tokens",
+        "Replace all dark theme CSS variables in prefers-color-scheme: dark",
+        "Create SVG noise texture overlay for paper grain effect",
+        "Style custom scrollbar (::-webkit-scrollbar) — thin, accent-colored",
+        "Add prefers-reduced-motion: reduce media query with fallback styles"
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Redesign layout: split-panel with vertical sidebar",
+      "description": "Replace the current full-width stacked layout with a split-panel design. Add a fixed-width sidebar (52px) on the left with app icon, vertical stats, and icon-only navigation. The sidebar should have a dark tone regardless of theme (for contrast). Compact title bar replaces the large header. Responsive: collapse sidebar to 36px icon-strip at 600-799px, hide below 600px.",
+      "status": "done",
+      "priority": "high",
+      "dependencies": [11],
+      "subtasks": [
+        "Create Sidebar.svelte component with app icon SVG, vertical stats, and icon buttons",
+        "Redesign App.svelte grid: sidebar (fixed) + main content (flex)",
+        "Create compact TitleBar.svelte: file name (truncated) + status badge (pill, color-coded)",
+        "Move stats from horizontal grid to sidebar vertical list with small-caps labels",
+        "Add status badge with pulse animation when extracting",
+        "Add responsive breakpoints: 800px (full), 600-799px (icon-strip), <600px (hidden)"
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Redesign drop zone with editorial style",
+      "description": "Replace the current generic drop zone with the Ink & Paper editorial design. Large Cormorant Garamond serif heading ('Drop your PDF'). Stylized PDF icon in monochrome SVG (document with folded corner, 64px). Custom dashed border with SVG stroke-dasharray pattern. Animated border: slow dash rotation on idle, accent color + icon scale-up on drag-over.",
+      "status": "done",
+      "priority": "high",
+      "dependencies": [12],
+      "subtasks": [
+        "Create PDF document SVG icon (monochrome, folded corner, 64px)",
+        "Restyle drop zone panel: Cormorant Garamond heading, DM Sans subtitle",
+        "Implement custom dashed border via SVG (stroke-dasharray animated)",
+        "Add idle animation: slow stroke-dashoffset rotation",
+        "Add drag-over state: accent border, icon scale-up, background shift",
+        "Restyle the Choose PDF button: pill shape with accent fill"
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Redesign text viewer with page cards and ruled lines",
+      "description": "Replace the current plain text display with editorial page cards. Each page card gets: cream paper-texture background, faint ruled horizontal lines (repeating-linear-gradient matched to line-height), subtle box-shadow, top-left corner fold effect (CSS triangle), and a folio-style page number in the top-right. Use JetBrains Mono for extracted text. Add page-load stagger animation (slide-up + fade-in, delay: index * 60ms).",
+      "status": "done",
+      "priority": "high",
+      "dependencies": [12],
+      "subtasks": [
+        "Restyle .page cards: cream bg, subtle shadow, rounded 12px",
+        "Add ruled lines via repeating-linear-gradient (match JetBrains Mono line-height)",
+        "Create CSS corner fold effect (::before triangle in top-left corner)",
+        "Move page number to top-right folio style (editorial, small-caps)",
+        "Implement staggered page entrance animation (slide-up + fade, 60ms delay per page)",
+        "Add page card hover: subtle lift (translateY -2px) + shadow increase",
+        "Set JetBrains Mono as font for pre elements"
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Redesign status bar, action buttons, and toast notifications",
+      "description": "Replace the current footer with a compact 48px status bar. Left side: status text + ink-line progress indicator (horizontal gradient that grows during extraction, like ink spreading). Right side: 'Copy All' (outline style) + 'Save TXT' (filled accent). Buttons: press-down micro-interaction on :active (translateY 1px). Redesign toast: rounded 12px, left color-band (4px), auto-dismiss with visible countdown bar (shrinking width animation).",
+      "status": "done",
+      "priority": "medium",
+      "dependencies": [12],
+      "subtasks": [
+        "Restyle footer to compact 48px status bar",
+        "Replace spinner with ink-line progress: horizontal bar with shimmer gradient",
+        "Restyle Copy All button: outline style, pill shape",
+        "Restyle Save TXT button: filled accent, pill shape",
+        "Add :active micro-interaction: translateY(1px) + darker bg on press",
+        "Redesign toast: rounded 12px, left color-band, slide-in with bounce easing",
+        "Add toast countdown bar: shrinking width over 3 seconds before dismiss"
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Redesign error states and accessibility polish",
+      "description": "Restyle error banner: full-width below title bar, 4px vermillion left border, cream bg, icon + message + dismiss button. Not a modal. Add keyboard navigation focus rings (2px offset accent outline). Ensure WCAG AA contrast for all text/bg combos in both themes. Add aria-labels for icon-only sidebar buttons. Respect prefers-reduced-motion: disable stagger animations, use opacity-only transitions.",
+      "status": "done",
+      "priority": "medium",
+      "dependencies": [14, 15],
+      "subtasks": [
+        "Restyle error alert: left border accent, icon, dismiss button",
+        "Add focus-visible ring styles (2px offset, accent color)",
+        "Verify WCAG AA contrast ratios in both light and dark themes",
+        "Add aria-label to all icon-only buttons in sidebar",
+        "Implement prefers-reduced-motion: disable stagger, simplify transitions",
+        "Test keyboard-only navigation flow through all interactive elements"
+      ]
+    },
+    {
+      "id": 17,
+      "title": "Integration test and visual QA of new UI",
+      "description": "Full visual QA pass: verify all components render correctly in both light and dark themes. Test all animations (stagger, ink-line, toast countdown, drop zone border rotation). Test responsive breakpoints (800px, 600px, min-size). Verify the complete user flow: drop/pick PDF → extraction with ink-line progress → page cards appear with stagger → copy/save with toast feedback. Fix any visual regressions.",
+      "status": "done",
+      "priority": "medium",
+      "dependencies": [16],
+      "subtasks": [
+        "Visual QA: light theme — all components, all states",
+        "Visual QA: dark theme — all components, all states",
+        "Test responsive: full (800+), compact (600-799), narrow (<600)",
+        "Test full user flow: file pick → extract → view → copy → save",
+        "Test animations: stagger, ink-line, toast countdown, drop zone",
+        "Test error states: encrypted PDF, image-only PDF, corrupt file",
+        "Fix any visual regressions or misalignments",
+        "Build release binary and verify packaged app"
       ]
     }
   ]

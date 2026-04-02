@@ -6,7 +6,8 @@ import process from "node:process";
 
 const mode = process.argv[2] ?? "current";
 const cwd = process.cwd();
-const stageDir = join(cwd, ".pkg-stage");
+const legacyStageDir = join(cwd, ".pkg-stage");
+const stageDir = join(cwd, `.pkg-stage-${process.pid}`);
 const bundleEntry = join(stageDir, "parser.bundle.mjs");
 const runtimeDir = join(stageDir, "runtime");
 const runtimePdfJsDir = join(runtimeDir, "pdfjs");
@@ -54,6 +55,7 @@ if (!targets[0]?.[0] || !targets[0]?.[1]) {
 }
 
 cleanupDir(stageDir);
+cleanupDir(legacyStageDir);
 cleanupFile(legacyBundleEntry);
 cleanupFile(legacyWorkerEntry);
 cleanupDir(legacyRuntimeDir);

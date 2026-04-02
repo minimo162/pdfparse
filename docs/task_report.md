@@ -106,3 +106,95 @@ Taskmaster 上の未完了タスクはありません。
 - 実 GUI 上での手動確認
 - 実際の暗号化 PDF、画像-only PDF、100+ ページ PDF を用いた回帰確認
 - 必要に応じた最終リリースビルドの再生成
+
+## 7. 追記: v1.1 UI 再設計タスク実施結果
+
+Taskmaster は v1.1 で 11-17 の追加タスクが定義されており、これらもすべて `done` に更新済みです。
+
+対象タスク:
+
+| ID | タスク | 状態 |
+| --- | --- | --- |
+| 11 | Set up design foundation: fonts, CSS variables, and theme tokens | done |
+| 12 | Redesign layout: split-panel with vertical sidebar | done |
+| 13 | Redesign drop zone with editorial style | done |
+| 14 | Redesign text viewer with page cards and ruled lines | done |
+| 15 | Redesign status bar, action buttons, and toast notifications | done |
+| 16 | Redesign error states and accessibility polish | done |
+| 17 | Integration test and visual QA of new UI | done |
+
+### 7.1 追加実装内容
+
+#### デザイン基盤
+
+- Google Fonts で Cormorant Garamond / DM Sans / JetBrains Mono を導入
+- Ink & Paper 用の light / dark テーマトークンへ全面移行
+- 紙面ノイズ、細いカスタムスクロールバー、`prefers-reduced-motion` を追加
+
+主要ファイル:
+
+- `src/app.html`
+- `src/app.css`
+
+#### レイアウト再設計
+
+- split-panel 構成へ変更
+- 左側に縦型サイドバー、右側にコンテンツパネルを配置
+- コンパクト title bar、モバイル用 stats セクションを追加
+- 800px / 600px のブレークポイントで段階的に縮退
+
+主要ファイル:
+
+- `src/App.svelte`
+- `src/lib/Sidebar.svelte`
+- `src/lib/TitleBar.svelte`
+
+#### ドロップゾーン / テキストビューア / アクション再設計
+
+- serif 見出し、SVG ドキュメントアイコン、回転する dash border の drop zone へ刷新
+- 抽出テキストを紙面カード風に表示し、罫線・折り返し角・folio 番号・段階表示アニメーションを追加
+- ステータスバーの ink-line progress、outline/filled の action button、3秒カウントダウン付き toast に刷新
+
+主要ファイル:
+
+- `src/lib/DropZone.svelte`
+- `src/lib/TextDisplay.svelte`
+- `src/lib/ActionBar.svelte`
+- `src/lib/state.svelte.ts`
+
+#### アクセシビリティ / エラー表示
+
+- エラーバナーを vermillion left border 付きの非モーダル表示へ変更
+- focus-visible ring を追加
+- icon-only ボタンへ `aria-label` を付与
+- reduced motion 時はアニメーション負荷を落とす構成に調整
+
+### 7.2 実装補足
+
+- sidecar build は並列実行時でも staging が衝突しないように改善
+- build 後に `.pkg-stage` や一時 runtime を残さないよう整理
+- Tauri bundle identifier は `com.pdfparse.desktop` に変更し、`.app` 警告を解消
+
+主要ファイル:
+
+- `src-tauri/sidecar/build-sidecar.mjs`
+- `src-tauri/tauri.conf.json`
+
+### 7.3 追加検証結果
+
+確認済み:
+
+- `pnpm check`
+- `pnpm build`
+- `pnpm tauri build`
+
+確認できた成果物:
+
+- `src-tauri/target/release/bundle/deb/PDFParse_0.1.0_amd64.deb`
+- `src-tauri/target/release/bundle/rpm/PDFParse-0.1.0-1.x86_64.rpm`
+- `src-tauri/target/release/bundle/appimage/PDFParse_0.1.0_amd64.AppImage`
+
+補足:
+
+- `pnpm tauri build` では `.deb` と `.rpm` の再生成を確認
+- headless 環境のため、新 UI の最終目視確認までは未実施

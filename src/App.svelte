@@ -4,10 +4,11 @@
   import { writeText } from "@tauri-apps/plugin-clipboard-manager";
   import { confirm, open, save } from "@tauri-apps/plugin-dialog";
   import { onMount } from "svelte";
-  import { fade, fly } from "svelte/transition";
   import ActionBar from "./lib/ActionBar.svelte";
   import DropZone from "./lib/DropZone.svelte";
+  import Sidebar from "./lib/Sidebar.svelte";
   import TextDisplay from "./lib/TextDisplay.svelte";
+  import TitleBar from "./lib/TitleBar.svelte";
   import {
     appState,
     clearError,
@@ -50,6 +51,40 @@
     }
 
     return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+  };
+
+  const formatCompactNumber = (value: number) => value.toLocaleString();
+
+  const getStatusTone = () => {
+    if (appState.loading) {
+      return { label: "Extracting", tone: "working" as const };
+    }
+
+    if (appState.error) {
+      return { label: "Error", tone: "error" as const };
+    }
+
+    if (appState.pages.length) {
+      return { label: "Ready", tone: "success" as const };
+    }
+
+    return { label: "Idle", tone: "idle" as const };
+  };
+
+  const getStatusText = () => {
+    if (appState.loading) {
+      return "Ink line is running across the press while text is extracted.";
+    }
+
+    if (appState.error) {
+      return "Review the error note, then try another PDF.";
+    }
+
+    if (appState.pages.length) {
+      return "Extraction finished locally. Copy the text or save it as plain TXT.";
+    }
+
+    return "Drop a single text-based PDF or browse from disk to begin.";
   };
 
   async function selectFromDialog() {
@@ -102,7 +137,7 @@
   async function handleCopy() {
     try {
       await writeText(getExportText());
-      showToast("success", "Copied!");
+      showToast("success", "Copied to clipboard");
     } catch {
       showToast("error", "Copy failed");
     }
@@ -120,10 +155,24 @@
       }
 
       await invoke("save_text", { content: getExportText(), path });
-      showToast("success", "Saved!");
+      showToast("success", "Saved as TXT");
     } catch {
       showToast("error", "Save failed");
     }
+  }
+
+  function jumpToTop() {
+    document.getElementById("page-stack")?.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  function jumpToPage(pageNumber: number) {
+    document.getElementById(`page-${pageNumber}`)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }
 
   onMount(() => {
@@ -173,81 +222,79 @@
 <div class="shell">
   <div class="shell__backdrop"></div>
 
-  <main class="app">
-    <header class="app__header">
-      <div>
-        <p class="app__kicker">PDFParse</p>
-        <h1>Desktop PDF text extraction</h1>
-      </div>
+  <div class="workspace">
+    <Sidebar
+      fileName={appState.fileName}
+      fileSizeLabel={formatFileSize(appState.fileSize)}
+      pageCount={appState.pageCount}
+      charCountLabel={formatCompactNumber(appState.charCount)}
+      statusLabel={getStatusTone().label}
+      hasPages={appState.pages.length > 0}
+      onPickFile={selectFromDialog}
+      onJumpToTop={jumpToTop}
+      onJumpToPage={jumpToPage}
+    />
 
-      <div class="stats">
-        <div>
-          <span>File</span>
-          <strong>{appState.fileName ?? "No PDF selected"}</strong>
-        </div>
-        <div>
+    <main class="panel">
+      <TitleBar fileName={appState.fileName} status={getStatusTone()} />
+
+      <section class="mobile-stats" aria-label="Document statistics">
+        <article>
           <span>Size</span>
           <strong>{formatFileSize(appState.fileSize)}</strong>
-        </div>
-        <div>
+        </article>
+        <article>
           <span>Pages</span>
           <strong>{appState.pageCount}</strong>
-        </div>
-        <div>
-          <span>Characters</span>
-          <strong>{appState.charCount.toLocaleString()}</strong>
-        </div>
-      </div>
-    </header>
+        </article>
+        <article>
+          <span>Chars</span>
+          <strong>{formatCompactNumber(appState.charCount)}</strong>
+        </article>
+      </section>
 
-    {#if appState.error}
-      <aside class="alert" transition:fade>{appState.error}</aside>
-    {/if}
-
-    <section class="app__main">
-      {#if appState.pages.length}
-        <div class="viewer" transition:fly={{ y: 14, duration: 220 }}>
-          <div class="viewer__toolbar">
-            <p>Extracted text is shown page by page and stays local on this device.</p>
-            <button class="viewer__button" onclick={selectFromDialog} disabled={appState.loading}>
-              Open another PDF
-            </button>
-          </div>
-          <TextDisplay pages={appState.pages} />
-        </div>
-      {:else}
-        <DropZone
-          loading={appState.loading}
-          dragActive={appState.dragActive}
-          onPickFile={selectFromDialog}
-        />
+      {#if appState.error}
+        <aside class="error-banner" role="alert" aria-live="assertive">
+          <div class="error-banner__icon" aria-hidden="true">!</div>
+          <p>{appState.error}</p>
+          <button class="error-banner__dismiss" onclick={clearError}>Dismiss</button>
+        </aside>
       {/if}
-    </section>
 
-    <footer class="app__footer">
-      <div class="status-line">
-        {#if appState.loading}
-          <span class="spinner" aria-hidden="true"></span>
-          <span>Extracting text...</span>
-        {:else if appState.fileName}
-          <span>Ready to copy or save.</span>
+      <section class="panel__main">
+        {#if appState.pages.length}
+          <TextDisplay pages={appState.pages} />
         {:else}
-          <span>Select a single text-based PDF to begin.</span>
+          <DropZone
+            loading={appState.loading}
+            dragActive={appState.dragActive}
+            onPickFile={selectFromDialog}
+          />
         {/if}
-      </div>
+      </section>
 
-      <ActionBar
-        disabled={!appState.pages.length}
-        loading={appState.loading}
-        onCopy={handleCopy}
-        onSave={handleSave}
-      />
-    </footer>
-  </main>
+      <footer class="status-bar">
+        <div class="status-bar__meta">
+          <p class="status-bar__text">{getStatusText()}</p>
+          <div class:status-bar__ink--active={appState.loading} class="status-bar__ink" aria-hidden="true">
+            <span></span>
+          </div>
+        </div>
+
+        <ActionBar
+          disabled={!appState.pages.length}
+          loading={appState.loading}
+          onCopy={handleCopy}
+          onSave={handleSave}
+        />
+      </footer>
+    </main>
+  </div>
 
   {#if appState.toast}
-    <div class={`toast toast--${appState.toast.kind}`} transition:fly={{ y: 16, duration: 180 }}>
-      {appState.toast.message}
+    <div class={`toast toast--${appState.toast.kind}`} role="status" aria-live="polite">
+      <p>{appState.toast.message}</p>
+      <div class="toast__meter"></div>
     </div>
   {/if}
 </div>

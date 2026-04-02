@@ -72,7 +72,7 @@ export function showToast(kind: "success" | "error", message: string) {
 
   toastTimeout = setTimeout(() => {
     appState.toast = null;
-  }, 2000);
+  }, 3000);
 }
 
 export function getExportText() {

@@ -53,25 +53,167 @@ extraction.
 - Save extracted text to a .txt file via save dialog
 - Preserve page structure in exported text
 
-## 6. UI Design
+## 6. UI Design — "Ink & Paper" Neo-Editorial
 
-Single-window layout with three zones:
+### 6.1 Design Concept
 
-┌─────────────────────────────────────┐
-│  Header: App title + file info      │
-├─────────────────────────────────────┤
-│                                     │
-│  Main area:                         │
-│  - Drop zone / file picker (empty)  │
-│  - Extracted text display (loaded)  │
-│                                     │
-├─────────────────────────────────────┤
-│  Footer: Copy / Save buttons        │
-└─────────────────────────────────────┘
+Aesthetic direction: luxury publishing meets precision tool. The app should feel
+like a premium document workshop — not a generic dashboard. Inspired by
+letterpress printing, fine stationery, and editorial typography.
 
-- Minimal, modern aesthetic
-- Light/dark theme based on system preference
-- Responsive layout (min window: 600x400)
+Key differentiator: extracted text pages look and feel like actual printed sheets
+with ruled-line texture, and a "printing press" extraction animation.
+
+### 6.2 Layout
+
+Split-panel layout with compact sidebar navigation:
+
+┌────┬──────────────────────────────────┐
+│    │  Compact Title Bar               │
+│ S  ├──────────────────────────────────┤
+│ I  │                                  │
+│ D  │  Main area:                      │
+│ E  │  - Drop zone (empty state)       │
+│ B  │  - Text viewer (loaded state)    │
+│ A  │                                  │
+│ R  ├──────────────────────────────────┤
+│    │  Status bar + Actions            │
+└────┴──────────────────────────────────┘
+
+Sidebar (48-56px wide):
+- App logo/icon at top
+- File stats displayed vertically (page count, char count, file size)
+- Compact icon-only navigation
+- Collapses to icon-strip on narrow windows
+
+### 6.3 Typography
+
+Load via Google Fonts or bundle locally:
+
+| Role           | Font                    | Fallback            |
+|----------------|-------------------------|---------------------|
+| Display/title  | Cormorant Garamond 600  | Georgia, serif      |
+| Body/UI        | DM Sans 400/500/700    | system-ui, sans     |
+| Extracted text | JetBrains Mono 400     | monospace           |
+| Stats/labels   | DM Sans 500 (small caps)| system-ui, sans    |
+
+- Display font is editorial serif — unusual for a tool app, makes it memorable
+- Body sans is geometric and clean for UI elements
+- Monospace for extracted content preserves spatial layout integrity
+
+### 6.4 Color System
+
+Light theme (default):
+- Background:    #F7F3EE (warm ivory, like fine paper)
+- Surface:       #FFFDF9 (bright cream, page cards)
+- Text primary:  #1A1410 (deep ink, almost black)
+- Text secondary:#7A6E62 (warm gray)
+- Accent:        #C7402D (vermillion red — editor's mark / wax seal)
+- Accent hover:  #A83220
+- Border:        #E8E0D4 (soft parchment line)
+- Success:       #2D7A45
+- Error:         #B83A2E
+- Rule lines:    rgba(26,20,16,0.04) (faint horizontal rules on text area)
+
+Dark theme:
+- Background:    #141210 (charcoal ink)
+- Surface:       #1E1B18 (dark paper)
+- Text primary:  #EDE6DC (cream on dark)
+- Text secondary:#9B8E7E
+- Accent:        #F06A52 (warm coral)
+- Accent hover:  #FF8570
+- Border:        rgba(237,230,220,0.08)
+- Rule lines:    rgba(237,230,220,0.03)
+
+### 6.5 Visual Effects & Texture
+
+- Paper grain: subtle CSS noise texture overlay on the main content area
+  (generated via SVG filter or tiny repeating PNG, opacity 0.02-0.04)
+- Ruled lines: faint horizontal lines in the text display area (like notebook
+  paper), created with repeating-linear-gradient, line-height matched
+- Page cards: each extracted page rendered as a card with:
+  - Subtle paper texture background
+  - Very slight box-shadow (like a sheet of paper sitting on a desk)
+  - Top-left corner fold effect (CSS triangle, subtle)
+  - Page number as a "folio" in the top-right corner (editorial style)
+- Drop zone: large centered area with a dashed border using a custom dash
+  pattern (SVG stroke-dasharray), animated on hover/drag
+- Drop zone icon: stylized PDF document icon with folded corner, drawn in CSS
+  or inline SVG
+
+### 6.6 Animation & Motion
+
+- **Page load stagger**: When extraction completes, pages appear one by one
+  with a staggered slide-up + fade-in (animation-delay: index * 60ms).
+  Simulates pages coming off a printing press.
+- **Extraction progress**: Instead of a generic spinner, show a horizontal
+  "ink line" that grows across the status bar (like ink spreading on paper).
+  Use a CSS animation with a shimmer gradient.
+- **Drop zone hover**: The dashed border segments rotate slowly (CSS animation
+  on stroke-dashoffset). On drag-over, the icon scales up and the border
+  color transitions to accent.
+- **Button micro-interactions**: Buttons have a subtle press-down effect
+  (translateY(1px) + darker bg) on :active, not just hover.
+- **Toast notifications**: Slide in from bottom-right with a slight bounce
+  easing. Auto-dismiss with a shrinking progress bar at the bottom.
+- **Page card hover**: Very subtle lift (translateY(-2px)) with shadow
+  increase on individual page cards.
+
+### 6.7 Component Details
+
+**Sidebar**
+- Fixed width 52px, dark-toned regardless of theme (provides contrast)
+- App icon: custom SVG — stylized "P" in a document shape
+- Stats: vertical list with small-caps labels + bold values
+- Active state: thin 2px accent line on the left edge
+
+**Header / Title Bar**
+- Compact: single row with file name (truncated with ellipsis) + extraction
+  status badge (idle / extracting / done / error)
+- Status badge: pill shape, color-coded, with subtle pulse animation when
+  extracting
+
+**Drop Zone (empty state)**
+- Full-height centered panel
+- Large serif heading: "Drop your PDF"
+- Subtitle: "or click to browse — text extraction in seconds"
+- PDF icon: 64px, monochrome, with folded corner detail
+- Dashed border: 2px, rounded 16px, accent color on drag
+
+**Text Viewer (loaded state)**
+- Scrollable area with page cards
+- Each card: cream background, ruled lines, page folio number
+- Custom scrollbar: thin (6px), accent-colored thumb, rounded
+- "Jump to page" mini-navigation in the sidebar when multiple pages
+
+**Status Bar / Footer**
+- Left: status text (muted) + extraction progress indicator
+- Right: action buttons — "Copy All" (outline) + "Save TXT" (filled accent)
+- Compact height: 48px
+
+**Error States**
+- Error banner: full-width below header, vermillion left border (4px),
+  cream background, icon + message + dismiss button
+- Not a modal — doesn't block interaction
+
+**Toast**
+- Position: bottom-right, 16px from edges
+- Shape: rounded 12px, with left color-band (4px, success/error color)
+- Auto-dismiss: 3 seconds with visible countdown bar
+
+### 6.8 Responsive Behavior
+
+- >= 800px: full sidebar + split layout
+- 600-799px: sidebar collapses to thin icon strip (36px)
+- < 600px: sidebar hidden, stats move to collapsible header section
+
+### 6.9 Accessibility
+
+- All interactive elements keyboard-navigable
+- Focus rings: 2px offset accent outline (visible on both themes)
+- WCAG AA contrast ratios for all text/background combinations
+- Screen reader labels for icon-only sidebar buttons
+- Respect prefers-reduced-motion: disable stagger animations, use opacity-only
 
 ## 7. Technical Architecture
 
